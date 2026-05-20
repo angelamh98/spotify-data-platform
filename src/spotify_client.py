@@ -3,7 +3,9 @@ import base64
 import requests
 from dotenv import load_dotenv
 
-from database import insert_artist
+from database import insert_artist, get_artist_by_name
+from tracks import get_artist_tracks
+from database import insert_track
 
 load_dotenv()
 
@@ -61,12 +63,10 @@ def search_artist(token, artist_name):
     artist_id = items[0]["id"]
 
     artist_url = f"https://api.spotify.com/v1/artists/{artist_id}"
-
     artist_response = requests.get(artist_url, headers=headers)
     artist_response.raise_for_status()
 
     artist_data = artist_response.json()
-    print(artist_data)
 
     artist = {
         "id": artist_data["id"],
@@ -84,8 +84,37 @@ token = get_token()
 
 artist_name = input("Enter artist name: ")
 
-artist = search_artist(token, artist_name)
+existing_artist = get_artist_by_name(artist_name)
 
-print(artist)
+if existing_artist:
 
-insert_artist(artist)
+    print("Artist found in database!")
+
+    artist = {
+        "id": existing_artist[0],
+        "name": existing_artist[1]
+    }
+
+else:
+
+    print("Artist not found in database.")
+    print("Fetching from Spotify API...")
+
+    artist = search_artist(token, artist_name)
+
+    print(artist)
+
+    insert_artist(artist)
+
+tracks = get_artist_tracks(
+    token,
+    artist["id"]
+)
+
+print(f"\nFound {len(tracks)} top tracks\n")
+
+for track in tracks:
+
+    print(track)
+
+    insert_track(track)
