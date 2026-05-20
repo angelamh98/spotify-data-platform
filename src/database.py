@@ -32,12 +32,41 @@ def insert_artist(artist):
 
     print(f"Artist '{artist['name']}' inserted successfully!")
 
-def insert_track(track):
 
+def insert_album(album):
+    query = text("""
+        INSERT INTO albums (
+            id,
+            artist_id,
+            name,
+            release_date,
+            total_tracks,
+            spotify_url
+        )
+        VALUES (
+            :id,
+            :artist_id,
+            :name,
+            :release_date,
+            :total_tracks,
+            :spotify_url
+        )
+        ON CONFLICT (id) DO NOTHING
+    """)
+
+    with engine.connect() as connection:
+        connection.execute(query, album)
+        connection.commit()
+
+    print(f"Album '{album['name']}' inserted successfully!")
+
+
+def insert_track(track):
     query = text("""
         INSERT INTO tracks (
             id,
             artist_id,
+            album_id,
             name,
             popularity,
             duration_ms,
@@ -47,6 +76,7 @@ def insert_track(track):
         VALUES (
             :id,
             :artist_id,
+            :album_id,
             :name,
             :popularity,
             :duration_ms,
@@ -57,13 +87,12 @@ def insert_track(track):
     """)
 
     with engine.connect() as connection:
-
         connection.execute(query, track)
-
         connection.commit()
 
     print(f"Track '{track['name']}' inserted successfully!")
-    
+
+
 def get_artist_by_name(artist_name):
     query = text("""
         SELECT *
